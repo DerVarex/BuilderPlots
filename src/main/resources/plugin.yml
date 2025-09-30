@@ -1,6 +1,6 @@
 name: BuilderPlots
 version: '1.0'
-main: com.wargar.builderPlots.BuilderPlots
+main: com.wargear.builderPlots.BuilderPlots
 api-version: '1.21'
 authors: [ dervarex ]
 description: PandaClient ingame UI
