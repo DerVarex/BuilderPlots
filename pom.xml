@@ -22,13 +22,16 @@
         <version>1.21.8-R0.1-SNAPSHOT</version>
         <scope>provided</scope>
     </dependency>
+
+
         <dependency>
-            <groupId>com.onarandombox</groupId>
-            <artifactId>Multiverse-Core</artifactId>
+            <groupId>com.github.Multiverse</groupId>
+            <artifactId>Multiverse-core</artifactId>
             <version>0.7.0</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/libs/multiverse-core-0.7.0.jar</systemPath>
+            <systemPath>${project.basedir}/libs/multiverse-core-5.3.0.jar</systemPath>
         </dependency>
+
     </dependencies>
 
     <build>
@@ -67,8 +70,13 @@
 
     <repositories>
         <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <repository>
             <id>papermc-repo</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
         </repository>
+
     </repositories>
 </project>

@@ -6,23 +6,33 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
+import org.mvplugins.multiverse.core.MultiverseCore;
 
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class BuilderPlots extends JavaPlugin {
+public final class BuilderPlots extends JavaPlugin implements Listener {
 
     private MultiverseCore mv;
     private Map<Player, PermissionAttachment> attachments = new HashMap<>();
 
     @Override
+    public @NotNull Path getDataPath() {
+        return super.getDataPath();
+    }
+
+    @Override
     public void onEnable() {
         mv = (MultiverseCore) Bukkit.getPluginManager().getPlugin("Multiverse-Core");
         Bukkit.getPluginManager().registerEvents(this, this);
+
     }
 
     @Override
