@@ -1,0 +1,26 @@
+name: BuilderPlots
+version: '1.0'
+main: com.wargear.builderPlots.BuilderPlots
+api-version: '1.21'
+authors: [ dervarex ]
+description: Made for wargear
+depend: [Multiverse-Core]
+softdepend: [FastAsyncWorldEdit]
+
+commands:
+  bau:
+    description: Erstellt oder betritt deinen Bau
+    usage: /bau
+    permission: bau.use
+  schemsave:
+    description: Speichert ein Schematic
+    usage: /schemsave <Typ>
+    permission: bau.schemsave
+
+permissions:
+  bau.use:
+    description: Erlaubt den Zugriff auf /bau
+    default: true
+  bau.schemsave:
+    description: Erlaubt das Speichern von Schematics
+    default: true
