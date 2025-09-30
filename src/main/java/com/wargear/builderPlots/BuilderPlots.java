@@ -11,28 +11,19 @@ import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.NotNull;
-import org.mvplugins.multiverse.core.MultiverseCore;
+import org.bukkit.scheduler.BukkitRunnable;
 
-import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 public final class BuilderPlots extends JavaPlugin implements Listener {
 
-    private MultiverseCore mv;
-    private Map<Player, PermissionAttachment> attachments = new HashMap<>();
-
-    @Override
-    public @NotNull Path getDataPath() {
-        return super.getDataPath();
-    }
+    private Map<UUID, PermissionAttachment> attachments = new HashMap<>();
 
     @Override
     public void onEnable() {
-        mv = (MultiverseCore) Bukkit.getPluginManager().getPlugin("Multiverse-Core");
         Bukkit.getPluginManager().registerEvents(this, this);
-
     }
 
     @Override
@@ -41,24 +32,39 @@ public final class BuilderPlots extends JavaPlugin implements Listener {
         Player player = (Player) sender;
 
         if (label.equalsIgnoreCase("bau")) {
-            String weltName = "bau_" + player.getName();
-            World w = Bukkit.getWorld(weltName);
+            String safeName = "bau_" + player.getUniqueId().toString();
+            World w = Bukkit.getWorld(safeName);
 
-            // Welt existiert nicht
             if (w == null) {
-                mv.getMVWorldManager().cloneWorld("bau", weltName);
-                w = Bukkit.getWorld(weltName);
+                String mvCommand = "mv clone bau " + safeName;
+                Bukkit.dispatchCommand(Bukkit.getConsoleSender(), mvCommand);
+
+                // asynchron
+                new BukkitRunnable() {
+                    int tries = 0;
+                    @Override
+                    public void run() {
+                        World newWorld = Bukkit.getWorld(safeName);
+                        if (newWorld != null) {
+                            // teleport + permissions
+                            player.teleport(newWorld.getSpawnLocation());
+                            setBuildPermissions(player, safeName);
+                            player.sendMessage("§aWillkommen in deinem Bau!");
+                            cancel();
+                            return;
+                        }
+                        tries++;
+                        if (tries > 20) { // ~20 * 5 ticks = 100 ticks = 5s timeout
+                            player.sendMessage("§cWelt konnte nicht geladen werden. Schau Console/Multiverse.");
+                            cancel();
+                        }
+                    }
+                }.runTaskTimer(this, 5L, 5L);
+                return true;
             }
 
-            // Teleport
             player.teleport(w.getSpawnLocation());
-
-            // Permissions setzen
-            PermissionAttachment att = player.addAttachment(this);
-            att.setPermission("bau." + weltName + ".owner", true);
-            att.setPermission("worldedit.*", true); // FAWE/WE Rechte
-            attachments.put(player, att);
-
+            setBuildPermissions(player, safeName);
             player.sendMessage("§aWillkommen in deinem Bau!");
             return true;
         }
@@ -69,12 +75,22 @@ public final class BuilderPlots extends JavaPlugin implements Listener {
                 return true;
             }
             String type = args[0].toLowerCase();
-            // Hier Schematic speichern mit FAWE API
+            // TODO: FAWE Schematic save
             player.sendMessage("§aSchematic gespeichert mit Typ: " + type);
             return true;
         }
 
         return false;
+    }
+
+    private void setBuildPermissions(Player player, String worldName) {
+        PermissionAttachment att = attachments.remove(player.getUniqueId());
+        if (att != null) player.removeAttachment(att);
+
+        PermissionAttachment newAtt = player.addAttachment(this);
+        newAtt.setPermission("bau." + worldName + ".owner", true);
+        newAtt.setPermission("worldedit.*", true);
+        attachments.put(player.getUniqueId(), newAtt);
     }
 
     @EventHandler
@@ -84,22 +100,23 @@ public final class BuilderPlots extends JavaPlugin implements Listener {
         World to = p.getWorld();
 
         // Permissions entfernen beim Verlassen
-        if (from.getName().startsWith("bau_")) {
-            PermissionAttachment att = attachments.remove(p);
+        if (from != null && from.getName().startsWith("bau_")) {
+            PermissionAttachment att = attachments.remove(p.getUniqueId());
             if (att != null) p.removeAttachment(att);
         }
 
         // Zugriff nur auf eigene Welt
-        if (to.getName().startsWith("bau_") && !to.getName().equals("bau_" + p.getName())) {
-            p.teleport(Bukkit.getWorld("world").getSpawnLocation());
-            p.sendMessage("§cNur der Owner darf diese Welt betreten!");
+        if (to != null && to.getName().startsWith("bau_") && !to.getName().equals("bau_" + p.getUniqueId().toString())) {
+            World fallback = Bukkit.getWorld("world");
+            if (fallback != null) p.teleport(fallback.getSpawnLocation());
+            p.sendMessage("§cDu hast keinen Zugriff auf diese Welt!");
         }
     }
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
         Player p = e.getPlayer();
-        PermissionAttachment att = attachments.remove(p);
+        PermissionAttachment att = attachments.remove(p.getUniqueId());
         if (att != null) p.removeAttachment(att);
     }
 }
